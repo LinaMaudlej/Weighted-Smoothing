@@ -1,4 +1,4 @@
-# Weighted-Smoothing-For-Smoothed-Inference-for-Adversarially-Trained-Models
+# Weighted-Smoothing
 Deep Learning Project 236781
 
 
