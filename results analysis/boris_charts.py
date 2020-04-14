@@ -92,10 +92,13 @@ for t, v in series.items():
     ax1.plot(xs, top1s, label=f'Top1 {t}')
     ax2.plot(xs, top5s, label=f'Top5 {t}')
 
-ax1.set(ylim=(0, 100))
-ax2.set(ylim=(0, 100))
-ax1.set(xlabel='Noise magnitude', ylabel='Accuracy %')
-ax2.set(xlabel='Noise magnitude', ylabel='Accuracy %')
+for ax in [ax1, ax2]:
+    ax.set(ylim=(0, 100))
+    ax.set(xlabel='Noise magnitude', ylabel='Accuracy %')
+    print(ax)
+    for i in range(5, 100, 5):
+        ax.axhline(i, lw=0.5, color='#4f4f4f')
+
 ax1.legend(loc="upper right")
 ax2.legend(loc="lower right")
 plt.draw()
