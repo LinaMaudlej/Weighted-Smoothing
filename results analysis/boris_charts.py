@@ -20,7 +20,7 @@ for n_txt, n in noise_values:
     for t_txt, t in vote_values:
         print(n, t)
         files.append((f'output\\out_boris{n_txt}_e_t{t_txt}_attack.txt', n, t))
-    files.append((f'output\\out_boris{n_txt}_e_attack.txt', n, 'Baseline'))
+    files.append((f'output\\out_boris{n_txt}_e_base_attack.txt', n, 'Baseline'))
 
 #files.append(('output\\out_boris1_e_t05_attack.txt', 0.1, 0.05))
 #files.append(('output\\out_boris1_e_t10_attack.txt', 0.1, 0.10))
