@@ -1,6 +1,8 @@
 # Weighted-Smoothing
-Deep Learning Project 236781
-https://github.com/yanemcovsky/SIAM
+Deep Learning Project 236781.
+
+Paper: https://arxiv.org/pdf/1911.07198.pdf
+Repo: https://github.com/yanemcovsky/SIAM
 
 
 A README file (plain text/markdown) explaining:
