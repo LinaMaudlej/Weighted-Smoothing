@@ -1,4 +1,4 @@
-Random Seed:  5206
+Random Seed:  4475
 ResNet_Cifar(
   (conv1): NoisedConv2DColored(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
   (bn1): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
@@ -132,5 +132,5 @@ Mean of alphas_diag_w is 0.02288356050848961+-0.0005198949365876615 (0.026170685
 Mean of alphas_factor_w is 0.0030633038841187954+-0.0011161031434312463 (0.006176978349685669) 
 Mean of alphas is 0.0795859843492508
 
-Test set: Average loss: 2.9955, Top1: 2920/10000 (29.20%), Top5: 7938/10000 (79.38%)
-Adverserial set (eps=0.03137254901960784): Average loss: 2.3007, Top1: 2004/10000 (20.04%), Top5: 6892/10000 (68.92%)
+Test set: Average loss: 2.4025, Top1: 2833/10000 (28.33%), Top5: 7865/10000 (78.65%)
+Adverserial set (eps=0.03137254901960784): Average loss: 2.3292, Top1: 2037/10000 (20.37%), Top5: 6936/10000 (69.36%)
