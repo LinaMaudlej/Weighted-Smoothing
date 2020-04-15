@@ -105,6 +105,10 @@ def get_args():
     parser.add_argument('--vote_thresh', type=float, default=-1.0, metavar='VT',
                         help='threshold for counting votes in monte carlo sampling')
 
+    parser.add_argument('--k_predic', type=float, default=-1.0, metavar='VT',
+                        help='predictions with the largest difference between the score of the top-ranking will be taken')
+
+
     args = parser.parse_args()
 
     if args.seed is None:
@@ -231,7 +235,10 @@ def main():
 
     if args.vote_thresh > 0.0:
         smoothing_args['vote_threshold'] = args.vote_thresh
-    
+ 
+    if args.k_predic > 0.0:
+        smoothing_args['k_predictions'] = args.k_predic
+       
     model = args.net(**smoothing_args, **add_args)
 
     num_parameters = sum([l.nelement() for l in model.parameters()])
