@@ -397,6 +397,10 @@ def main():
         if args.vote_thresh > 0.0:
             smoothing_args['vote_threshold'] = args.vote_thresh
 
+ 
+        if args.k_predic > 0.0:
+            smoothing_args['k_predictions'] = args.k_predic    
+
     model = args.net(**smoothing_args, **add_args)
 
     num_parameters = sum([l.nelement() for l in model.parameters()])
