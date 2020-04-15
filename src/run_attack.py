@@ -387,6 +387,9 @@ def main():
     if args.smoothing:
         # smoothing_args = {'noise_sd': noise_sd, 'm_test': m_test, 'm_train': m_train, 'logits': args.logits}
         smoothing_args = {'noise_sd': noise_sd, 'm_test': m_test, 'm_train': m_train}
+        if args.vote_thresh > 0.0:
+            smoothing_args['vote_threshold'] = args.vote_thresh
+
     model = args.net(**smoothing_args, **add_args)
 
     num_parameters = sum([l.nelement() for l in model.parameters()])
