@@ -436,7 +436,7 @@ class ResNet_Cifar_FilteredMonteCarlo(ResNet_Cifar):
                  act_noise_b=False, rank=5, noise_sd=0.0, m_test=1, m_train=1, learn_noise=False, w_assign_fn=None):
         super(ResNet_Cifar_FilteredMonteCarlo, self).__init__(block, layers, width, num_classes, input_size, weight_noise, act_noise_a, act_noise_b, rank, noise_sd, m_test, m_train, learn_noise)
         self.w_assign_fn = w_assign_fn
-
+    
     def monte_carlo_predict(self, x, maxk, pred):
         with torch.no_grad():
             if self.m_test == 1:
@@ -451,17 +451,20 @@ class ResNet_Cifar_FilteredMonteCarlo(ResNet_Cifar):
             if self.w_assign_fn is not None:
                 weighted_outputs = self.w_assign_fn(outputs)
             else:
-                weighted_outputs = [(p, 1) for p in outputs]
+                weighted_outputs = [(p, (1, 0)) for p in outputs]
 
-            for output, w in weighted_outputs:
-                _, pred_i = output.topk(maxk, 1, True, True)
-                if maxk == 1:
-                    wk = w
-                else:
-                    wk = w.repeat(1,maxk).view(-1, 1)
-                pred_i_flat = pred_i.view(-1, 1)
-                histogram_values = histogram.gather(1, pred_i_flat)
-                histogram = histogram.scatter(1, pred_i_flat, histogram_values + wk)
+            for output, ws in weighted_outputs:
+                output_copy = output.clone()
+                for w in ws:
+                    _, pred_i = output_copy.topk(maxk, 1, True, True)
+                    if maxk == 1:
+                        wk = w
+                    elif torch.is_tensor(w):
+                        wk = w.repeat(1,maxk).view(-1, 1)
+                    pred_i_flat = pred_i.view(-1, 1)
+                    histogram_values = histogram.gather(1, pred_i_flat)
+                    histogram = histogram.scatter(1, pred_i_flat, histogram_values + wk)
+                    output_copy[pred_i] = -float('inf')
             histogram = histogram.view(pred.shape[0], pred.shape[1], self.num_classes)
             predict = torch.empty_like(pred)
 
@@ -478,9 +481,6 @@ class FilterByThreshold():
     
     def __call__(self, nn_outputs):
         for pred in nn_outputs:
-            #2 is k (the number of top items to return)
-            #1 is the dimension
-            #The first true is to return the greatest results (false would mean lowest results)
             scores, _ = pred.topk(2, 1, True, True)
             scores_min_raw, _ = pred.topk(1, 1, False, True)
             score_min, score_max = scores_min_raw.view(-1, 1), scores[...,0].view(-1, 1)
@@ -489,7 +489,7 @@ class FilterByThreshold():
             valid = torch.zeros_like(scores_min_raw)
             valid[diffs > self.thresh] = 1.
             #print('Valid predictions: {torch.sum(valid)}/{torch.numel(valid)}')
-            yield pred, valid
+            yield pred, (valid,)
 
 class FilterByThresholdSoftmax():
     def __init__(self, thresh):
@@ -503,35 +503,49 @@ class FilterByThresholdSoftmax():
             valid = torch.zeros_like(diffs)
             valid[diffs > self.thresh] = 1.
             #print('Valid predictions: {torch.sum(valid)}/{torch.numel(valid)}')
-            yield pred, valid
-
+            yield pred, (valid,)
 
 class FilterByThresholdKPredictions():
     def __init__(self, k):
         self.k = k
 
     def __call__(self, nn_outputs):
-            get_device = nn_outputs[0].get_device()
-            m_batches = nn_outputs
-            m=np.shape(m_batches)[0]
-            size_items=m_batches[0].size()[0]
-            
-            diffs = torch.zeros((size_items, m),device=get_device)
-            for i, pred in enumerate(m_batches):
-                pred_scaled = nn.functional.softmax(pred, dim=1)
-                scores, _ = pred_scaled.topk(2, 1, True, True)
-                diffs[:,i] = scores[:,0] - scores[:,1]
+        get_device = nn_outputs[0].get_device()
+        m_batches = nn_outputs
+        m=np.shape(m_batches)[0]
+        size_items=m_batches[0].size()[0]
+        
+        diffs = torch.zeros((size_items, m),device=get_device)
+        for i, pred in enumerate(m_batches):
+            pred_scaled = nn.functional.softmax(pred, dim=1)
+            scores, _ = pred_scaled.topk(2, 1, True, True)
+            diffs[:,i] = scores[:,0] - scores[:,1]
 
-            _, valid_idxs = diffs.topk(int(self.k), 1, True, True)
-            #valid_list = []
-            for i, _ in enumerate(m_batches):
-                #valid = torch.zeros_like(pred)
-                #print(valid)
-                valid= torch.zeros((size_items,),device=get_device)
-                #print((valid_idxs[:,:] == i).any(dim=1))
-                valid[(valid_idxs[:,:] == i).any(dim=1)] = 1
-                #valid_list.append(valid)             
-                yield pred, valid
+        _, valid_idxs = diffs.topk(int(self.k), 1, True, True)
+        #valid_list = []
+        for i, _ in enumerate(m_batches):
+            #valid = torch.zeros_like(pred)
+            #print(valid)
+            valid= torch.zeros((size_items,),device=get_device)
+            #print((valid_idxs[:,:] == i).any(dim=1))
+            valid[(valid_idxs[:,:] == i).any(dim=1)] = 1
+            #valid_list.append(valid)             
+            yield pred, (valid, )
+
+
+class FilterByThresholdSoftmaxTop2():
+    def __init__(self, thresh):
+        self.thresh = thresh
+    
+    def __call__(self, nn_outputs):
+        for pred in nn_outputs:
+            pred_scaled = nn.functional.softmax(pred, dim=1)
+            scores, _ = pred_scaled.topk(2, 1, True, True)
+            diffs = scores[...,0] - scores[...,1]
+            valid = torch.zeros_like(diffs)
+            valid[diffs < self.thresh] = 1.
+            #print('Valid predictions: {torch.sum(valid)}/{torch.numel(valid)}')
+            yield pred, (torch.ones_like(valid), valid)
 
 
 def resnet20_cifar(**kwargs):
@@ -543,6 +557,10 @@ def resnet20_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [3, 3, 3], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [3, 3, 3], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [3, 3, 3], **kwargs)
     return model
@@ -557,6 +575,10 @@ def resnet32_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [5, 5, 5], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [5, 5, 5], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [5, 5, 5], **kwargs)
     return model
@@ -571,6 +593,10 @@ def resnet44_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [7, 7, 7], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [7, 7, 7], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [7, 7, 7], **kwargs)
     return model
@@ -585,6 +611,10 @@ def resnet56_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [9, 9, 9], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [9, 9, 9], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [9, 9, 9], **kwargs)
     return model
@@ -599,6 +629,10 @@ def resnet110_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [18, 18, 18], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [18, 18, 18], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [18, 18, 18], **kwargs)
     return model
@@ -613,6 +647,10 @@ def resnet1202_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [200, 200, 200], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(BasicBlock, [200, 200, 200], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(BasicBlock, [200, 200, 200], **kwargs)
     return model
@@ -627,6 +665,10 @@ def resnet164_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(Bottleneck, [18, 18, 18], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(Bottleneck, [18, 18, 18], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(Bottleneck, [18, 18, 18], **kwargs)
     return model
@@ -641,6 +683,10 @@ def resnet1001_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(Bottleneck, [111, 111, 111], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(Bottleneck, [111, 111, 111], w_assign_fn=vote_fn, **kwargs)
     else:
         model = ResNet_Cifar(Bottleneck, [111, 111, 111], **kwargs)
     return model
@@ -655,6 +701,10 @@ def preact_resnet110_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(preactbasicblock, [18, 18, 18], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(PreActBasicBlock, [18, 18, 18], w_assign_fn=vote_fn, **kwargs)
     else:
         model = PreAct_ResNet_Cifar(preactbasicblock, [18, 18, 18], **kwargs)
     return model
@@ -669,6 +719,10 @@ def preact_resnet164_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(PreActBottleneck, [18, 18, 18], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(PreActBottleneck, [18, 18, 18], w_assign_fn=vote_fn, **kwargs)
     else:
         model = PreAct_ResNet_Cifar(PreActBottleneck, [18, 18, 18], **kwargs)
     return model
@@ -683,6 +737,10 @@ def preact_resnet1001_cifar(**kwargs):
         predictions_fn = FilterByThresholdKPredictions(kwargs['k_predictions'])
         del kwargs['k_predictions']
         model = ResNet_Cifar_FilteredMonteCarlo(PreActBottleneck, [111, 111, 111], w_assign_fn=predictions_fn, **kwargs)
+    elif 'close_pred_thresh' in kwargs:
+        vote_fn = FilterByThresholdSoftmaxTop2(kwargs['close_pred_thresh'])
+        del kwargs['close_pred_thresh']
+        model = ResNet_Cifar_FilteredMonteCarlo(PreActBottleneck, [111, 111, 111], w_assign_fn=vote_fn, **kwargs)
     else:
         model = PreAct_ResNet_Cifar(PreActBottleneck, [111, 111, 111], **kwargs)
     return model

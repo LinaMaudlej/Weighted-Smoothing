@@ -98,8 +98,12 @@ def get_args():
     parser.add_argument('--vote_thresh', type=float, default=-1.0, metavar='VT',
                         help='threshold for counting votes in monte carlo sampling')
 
-    parser.add_argument('--k_predic', type=float, default=-1.0, metavar='VT',
+    parser.add_argument('--k_predic', type=float, default=-1.0, metavar='KP',
                         help='predictions with the largest difference between the score of the top-ranking will be taken')
+
+    parser.add_argument('--close_pred_thresh', type=float, default=-1.0, metavar='CP',
+                        help='assign a vote to the second-ranking class, if its probability is close to the top-ranking')
+
 
 
     args = parser.parse_args()
@@ -234,9 +238,10 @@ def check_hyper(args):
             
             if args.vote_thresh > 0.0:
                 smoothing_args['vote_threshold'] = args.vote_thresh
-            
-            if args.k_predic > 0.0:
+            elif args.k_predic > 0.0:
                 smoothing_args['k_predictions'] = args.k_predic
+            elif args.close_pred_thresh > 0.0:
+                smoothing_args['close_pred_thresh'] = args.close_pred_thresh
             
             # smoothing_args = {'noise_sd': noise, 'm_test': iterations, 'm_train': args.m_train, 'logits': args.logits}
             model = args.net(width=args.width, **smoothing_args, **add_args)
@@ -396,10 +401,10 @@ def main():
         smoothing_args = {'noise_sd': noise_sd, 'm_test': m_test, 'm_train': m_train}
         if args.vote_thresh > 0.0:
             smoothing_args['vote_threshold'] = args.vote_thresh
-
- 
-        if args.k_predic > 0.0:
-            smoothing_args['k_predictions'] = args.k_predic    
+        elif args.k_predic > 0.0:
+            smoothing_args['k_predictions'] = args.k_predic
+        elif args.close_pred_thresh > 0.0:
+            smoothing_args['close_pred_thresh'] = args.close_pred_thresh
 
     model = args.net(**smoothing_args, **add_args)
 
