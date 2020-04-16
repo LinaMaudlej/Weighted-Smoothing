@@ -460,7 +460,9 @@ class ResNet_Cifar_FilteredMonteCarlo(ResNet_Cifar):
                     if maxk == 1:
                         wk = w
                     elif torch.is_tensor(w):
-                        wk = w.repeat(1,maxk).view(-1, 1)
+                        wk = w.repeat(1, maxk).view(-1, 1)
+                    else:
+                        wk = 1
                     pred_i_flat = pred_i.view(-1, 1)
                     histogram_values = histogram.gather(1, pred_i_flat)
                     histogram = histogram.scatter(1, pred_i_flat, histogram_values + wk)
@@ -510,23 +512,24 @@ class FilterByThresholdKPredictions():
         self.k = k
 
     def __call__(self, nn_outputs):
-        get_device = nn_outputs[0].get_device()
+        #get_device = nn_outputs[0].get_device()
         m_batches = nn_outputs
-        m=np.shape(m_batches)[0]
+        m = len(m_batches)
         size_items=m_batches[0].size()[0]
         
-        diffs = torch.zeros((size_items, m),device=get_device)
+        diffs = torch.zeros((size_items, m)).to(nn_outputs[0])
         for i, pred in enumerate(m_batches):
             pred_scaled = nn.functional.softmax(pred, dim=1)
             scores, _ = pred_scaled.topk(2, 1, True, True)
             diffs[:,i] = scores[:,0] - scores[:,1]
 
         _, valid_idxs = diffs.topk(int(self.k), 1, True, True)
+        #print(valid_idxs[:10,:])
         #valid_list = []
-        for i, _ in enumerate(m_batches):
+        for i, pred in enumerate(m_batches):
             #valid = torch.zeros_like(pred)
             #print(valid)
-            valid= torch.zeros((size_items,),device=get_device)
+            valid= torch.zeros((size_items,)).to(nn_outputs[0])
             #print((valid_idxs[:,:] == i).any(dim=1))
             valid[(valid_idxs[:,:] == i).any(dim=1)] = 1
             #valid_list.append(valid)             
@@ -542,10 +545,11 @@ class FilterByThresholdSoftmaxTop2():
             pred_scaled = nn.functional.softmax(pred, dim=1)
             scores, _ = pred_scaled.topk(2, 1, True, True)
             diffs = scores[...,0] - scores[...,1]
-            valid = torch.zeros_like(diffs)
-            valid[diffs < self.thresh] = 1.
-            #print('Valid predictions: {torch.sum(valid)}/{torch.numel(valid)}')
-            yield pred, (torch.ones_like(valid), valid)
+            valid2 = torch.zeros_like(diffs)
+            valid1 = torch.ones_like(valid2)
+            valid2[diffs < self.thresh] = 1.0
+            #print(f'Valid predictions: {torch.sum(valid)}/{torch.numel(valid)}')
+            yield pred, (valid1, valid2)
 
 
 def resnet20_cifar(**kwargs):
