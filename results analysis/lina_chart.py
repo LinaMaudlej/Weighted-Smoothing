@@ -31,6 +31,7 @@ files.append(('lina_output/out_boris1_e_k1_attack.txt', 0.1, 1))
 files.append(('lina_output/out_boris1_e_k4_attack.txt', 0.1, 4))
 files.append(('lina_output/out_boris1_e_k8_attack.txt', 0.1, 8))
 files.append(('lina_output/out_boris1_e_k12_attack.txt', 0.1, 12))
+files.append(('lina_output/out_boris1_e_k16_attack.txt', 0.1, 16))
 
 
 
@@ -38,6 +39,7 @@ files.append(('lina_output/out_boris2_e_k1_attack.txt', 0.2,1))
 files.append(('lina_output/out_boris2_e_k4_attack.txt', 0.2, 4))
 files.append(('lina_output/out_boris2_e_k8_attack.txt', 0.2, 8))
 files.append(('lina_output/out_boris2_e_k12_attack.txt', 0.2, 12))
+files.append(('lina_output/out_boris2_e_k16_attack.txt', 0.2, 16))
 
 
 
@@ -45,18 +47,20 @@ files.append(('lina_output/out_boris3_e_k1_attack.txt', 0.3, 1))
 files.append(('lina_output/out_boris3_e_k4_attack.txt', 0.3, 4))
 files.append(('lina_output/out_boris3_e_k8_attack.txt', 0.3, 8))
 files.append(('lina_output/out_boris3_e_k12_attack.txt', 0.3, 12))
-
+files.append(('lina_output/out_boris3_e_k16_attack.txt', 0.3, 16))
 
 files.append(('lina_output/out_boris4_e_k1_attack.txt', 0.4, 1))
-files.append(('lina_output/out_boris4_e_k4_attack.txt', 0.4, 4))
+files.append(('lina_output/out_boris4_e_k4_attack.txt', 0.4, 4))    
 files.append(('lina_output/out_boris4_e_k8_attack.txt', 0.4, 8))
-files.append(('lina_output/out_boris4_e_k12_attack.txt', 0.4, 12))
+files.append(('lina_output/out_boris4_e_k12_attack.txt', 0.4, 12))  
+files.append(('lina_output/out_boris4_e_k16_attack.txt', 0.4, 16))
 
 
 files.append(('lina_output/out_boris5_e_k1_attack.txt', 0.5,1))
 files.append(('lina_output/out_boris5_e_k4_attack.txt', 0.5, 4))
 files.append(('lina_output/out_boris5_e_k8_attack.txt', 0.5, 8))
 files.append(('lina_output/out_boris5_e_k12_attack.txt', 0.5, 12))
+files.append(('lina_output/out_boris5_e_k16_attack.txt', 0.5, 16))
 
 tests = []
 
