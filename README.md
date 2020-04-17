@@ -9,7 +9,7 @@ A README file (plain text/markdown) explaining:
 The structure of the code in the src/ folder: What is implemented in each package/module.
 Steps to reproduce your results using this code: Where to get and place the data, how to run all the data processing steps, how to run training and evaluation
 
-# Implementation folders
+# Implementation folders and what is implemented
 ####  src/run_attack.py 
 
 ####  src/train.py
@@ -22,11 +22,12 @@ After regular training as mentioned in the repository https://github.com/yanemco
 #### 1) run the adversrial attack with first method ( --)
     python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict --vote_thresh <threshold> --attack epgd --epochs <epochs_num> --m_test  <test_num> --m_train <train_num> --noise_sd <noise_num> --repeat  <repeat_num> --resume <trained_path> 
 
-python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 1 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.1 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t1_attack.txt  
-python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 1 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.2 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t2_attack.txt  
-python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 1 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.3 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t3_attack.txt  
-python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 1 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.4 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t4_attack.txt  
-python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 1 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.5 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t5_attack.txt 
+#### Example for noise_sd range [0,0.5]:
+    python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 0.05 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.1 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t1_attack.txt  
+    python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 0.05 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.2 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t2_attack.txt  
+    python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 0.05 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.3 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t3_attack.txt  
+    python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 0.05 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.4 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t4_attack.txt  
+    python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict  --vote_thresh 0.05 --attack epgd --epochs 50 --m_test 16 --m_train 16 --noise_sd 0.5 --repeat 5 --resume src/results/2020-04-07_03-22-06 > Weighted-Smoothing/results analysis/Threshold_outputs/out_t5_attack.txt 
 
 #### 2) run the adversrial attack with second method ( --k_predic flag):
     python3 run_attack.py --weight-noise  --cpni  --smooth mcpredict --k_predic <k_num> --attack epgd --epochs <epochs_num> --m_test <test_num> --m_train <train_num> --noise_sd <noise_num>  --repeat <repeat_num> --resume <trained_path> 
