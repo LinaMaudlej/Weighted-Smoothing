@@ -10,7 +10,7 @@ def clean_test_res(txt):
 
 files = []
 
-noise_file_names = [1, 2] #, 3, 4, 5]
+noise_file_names = [1, 2, 3, 4, 5]
 noise_values = [(n, n*0.1) for n in noise_file_names]
 vote_values = [('05', 0.05), ('10', 0.1), ('15', 0.15), ('20', 0.2), ('25', 0.25)]
 vote_values = [('10', 0.10), ('20', 0.20)]
