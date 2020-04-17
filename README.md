@@ -33,8 +33,10 @@ After regular training as mentioned in the repository https://github.com/yanemco
 # Results and Evaluations 
 #### 1) Results for first method: 
     Weighted-Smoothing/Threshold_outputs 
+    python3 threshold_draw.py
 #### 2) Results for second method: 
     Weighted-Smoothing/KPredictions_outputs 
+    python3 kpredictions_draw.py
 
 
 
