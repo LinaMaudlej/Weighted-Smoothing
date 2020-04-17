@@ -95,6 +95,8 @@ def get_args():
 
     parser.add_argument('-g', '--gen-adv', dest='gen_adv', action='store_true', help='Generate adv samples')
     
+    parser.add_argument('--repeat', '-r', type=int, default=1, metavar='REP', help='The times to repeat the test')
+    
     parser.add_argument('--vote_thresh', type=float, default=-1.0, metavar='VT',
                         help='threshold for counting votes in monte carlo sampling')
 
@@ -491,7 +493,8 @@ def main():
 
         else:
             att_object = args.attack(model, criterion)
-        attack(model, val_loader, criterion, att_object, args.eps, normalize, device, dtype)
+        for _ in trange(args.repeat):
+            attack(model, val_loader, criterion, att_object, args.eps, normalize, device, dtype)
 
 
 if __name__ == '__main__':
