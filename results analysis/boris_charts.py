@@ -13,14 +13,14 @@ files = []
 
 noise_file_names = [1, 2, 3, 4, 5]
 noise_values = [(n, n*0.1) for n in noise_file_names]
-vote_values = [('05', 0.05), ('10', 0.1), ('15', 0.15), ('20', 0.2), ('25', 0.25)]
-vote_values = [('10', 0.10), ('20', 0.20)]
+vote_values = [('005', 0.005), ('010', 0.010), ('015', 0.015), ('020', 0.020), ('025', 0.025)]
+vote_values = [('005', 0.005), ('010', 0.010)]
 
 for n_txt, n in noise_values:
     files.append((f'output\\out_boris{n_txt}_e_base_attack.txt', n, 'Baseline'))
     for t_txt, t in vote_values:
         print(n, t)
-        files.append((f'output\\out_boris{n_txt}_e_cpt{t_txt}_attack.txt', n, t))
+        files.append((f'output\\out_boris{n_txt}_e_t{t_txt}_attack.txt', n, t))
 
 #files.append(('output\\out_boris1_e_t05_attack.txt', 0.1, 0.05))
 #files.append(('output\\out_boris1_e_t10_attack.txt', 0.1, 0.10))
