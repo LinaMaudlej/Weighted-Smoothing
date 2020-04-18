@@ -14,7 +14,7 @@ files = []
 noise_file_names = [1, 2, 3, 4, 5]
 noise_values = [(n, n*0.1) for n in noise_file_names]
 vote_values = [('005', 0.005), ('010', 0.010), ('015', 0.015), ('020', 0.020), ('025', 0.025)]
-#vote_values = [('005', 0.005), ('010', 0.010)]
+vote_values = [('005', 0.005)]
 
 for n_txt, n in noise_values:
     files.append((f'output\\out_boris{n_txt}_e_base_attack.txt', n, 'Baseline'))
@@ -58,9 +58,9 @@ for filename, noise, thresh in files:
     with open(filename, 'r') as f:
         for l in f.readlines():
             if l.startswith('Test set'):
-                tests.append(ResultItem(m=16, NoiseMagnitude=noise, Threshold=thresh, TestRes=l, OtherFalgs='Test, Weight Noise, CPNI, MCPredict, EPGD'))
+                tests.append(ResultItem(m=16, NoiseMagnitude=noise, Threshold=thresh, TestRes=l, OtherFalgs='Clean'))
             elif l.startswith('Adverserial set'):
-                tests.append(ResultItem(m=16, NoiseMagnitude=noise, Threshold=thresh, TestRes=l, OtherFalgs='Adversarial, Weight Noise, CPNI, MCPredict, EPGD'))
+                tests.append(ResultItem(m=16, NoiseMagnitude=noise, Threshold=thresh, TestRes=l, OtherFalgs='Adversarial'))
 
 
 #tests.append(ResultItem(m=512, NoiseMagnitude=0.2, TestRes='Test set: Average loss: 3.7071, Top1: 1056/10000 (10.56%), Top5: 5132/10000 (51.32%)', OtherFalgs='Weight Noise, CPNI, MCPredict, EPGD'))
@@ -108,3 +108,4 @@ for t in sorted(sorted(sorted(tests, key=lambda t: t.NoiseMagnitude), key=lambda
     top1 , top5 = clean_test_res(t.TestRes)
     test_type = 'Adversarial' if 'Adversarial' in t.OtherFalgs else 'Clean'
     print(f'{t.m} & {t.Threshold} & {t.NoiseMagnitude} & {test_type} & {top1}\% & {top5}\%\\\\')
+
