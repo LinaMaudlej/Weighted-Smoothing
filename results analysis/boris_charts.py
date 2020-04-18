@@ -14,7 +14,7 @@ files = []
 noise_file_names = [1, 2, 3, 4, 5]
 noise_values = [(n, n*0.1) for n in noise_file_names]
 vote_values = [('005', 0.005), ('010', 0.010), ('015', 0.015), ('020', 0.020), ('025', 0.025)]
-vote_values = [('005', 0.005), ('010', 0.010)]
+#vote_values = [('005', 0.005), ('010', 0.010)]
 
 for n_txt, n in noise_values:
     files.append((f'output\\out_boris{n_txt}_e_base_attack.txt', n, 'Baseline'))
@@ -103,3 +103,8 @@ ax1.legend(loc="upper right")
 ax2.legend(loc="lower right")
 plt.draw()
 plt.show()
+
+for t in sorted(sorted(sorted(tests, key=lambda t: t.NoiseMagnitude), key=lambda t: t.OtherFalgs, reverse=True), key=lambda t: str(t.Threshold)):
+    top1 , top5 = clean_test_res(t.TestRes)
+    test_type = 'Adversarial' if 'Adversarial' in t.OtherFalgs else 'Clean'
+    print(f'{t.m} & {t.Threshold} & {t.NoiseMagnitude} & {test_type} & {top1}\% & {top5}\%\\\\')
